@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+
+# Python junk
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Raw & generated data (never commit threat feeds or scan output)
+data/raw/
+data/results/
+*.csv
+*.json
+!tests/fixtures/*.json
+
+# OS/editor
+.DS_Store
+.vscode/
