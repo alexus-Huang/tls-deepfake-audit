@@ -12,7 +12,7 @@ def test_python_version_is_supported():
 
 
 def test_sslyze_importable():
-    import sslyze  # noqa: F401
+    import sslyze
     assert version("sslyze")
 
 
