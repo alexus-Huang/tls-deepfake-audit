@@ -110,7 +110,17 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - **Fix:** Reconstructed a time window from git commit timestamps (Phase 1 commits at 12:34 PM and 12:57 PM PDT on 2026-10-28). The scan most likely ran before the first commit. I marked the log entry as reconstructed, not exact, and wrote "not recorded" for the network.
 - **Lesson:** Log each scan when it happens, ideally automatically. From Phase 3 on, the scanner script will write the start time, network label, domains, and settings to a run record itself, so the log doesn't depend on memory.
 
+### 15. `sslyze.__version__` printed a module **(AI error)**
+- **Symptom:** The version command printed `<module 'sslyze.__version__' ...>` instead of a version number.
+- **Cause:** In SSLyze, `__version__` is a submodule. The command was written without checking.
+- **Fix:** Use `python -m pip show sslyze`.
+- **Lesson:** Verify a library's API before relying on it.
 
+### 16. SSLyze defaults conflict with the agreed limits
+- **Finding:** `network_max_retries` defaults to 3, but the plan promised no retries. Scanner concurrency limits default to `None`.
+- **Impact:** The Phase 1 smoke test (SSLyze CLI, example.com) ran with default settings, including 3 retries.
+- **Decision:** All later scans set every limit explicitly from `ScanConfig`.
+- **Related:** Cipher suite enumeration sends a few hundred handshakes per host, at most 2 at a time. Vulnerability probes (Heartbleed, CCS injection, ROBOT, renegotiation) are excluded to keep to the "no exploiting" promise.
 ## Approval and requirements record
 
 ### Approval from email with Nate
