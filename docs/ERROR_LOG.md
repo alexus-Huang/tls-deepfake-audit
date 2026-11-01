@@ -1,6 +1,8 @@
 # Error Log: TLS Deepfake Audit Project
 
+**Student:** [Your name]
 **Started:** 2026-10-28
+**Last updated:** 2026-11-01
 **Environment:** Windows, cmd terminal in VS Code, Python 3.12.2, pytest 9.2.0, SSLyze, pandas
 
 This log records every error, bug, mistake, obstacle, and challenge I hit, with the cause, the fix, and what I learned. Some mistakes came from AI-generated guidance, and those are marked **(AI error)** for honesty.
@@ -21,7 +23,8 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 | 10 | 2 | `venv` creation failed with "Permission denied" | Locked files |
 | 11 | 2 | Typos in commands (`auditv`, doubled `more` command) | Human error |
 | 12 | 1 | Unsure how to phrase the instructor email ("not to get flagged") | Ethics / communication |
-
+| 13 | 3 | Blueprint missed the cipher suite requirement | Planning gap (AI error) |
+| 14 | 1 | Phase 1 scan time and network not recorded | Process gap |
 ## Detailed entries
 
 ### 1. pytest INTERNALERROR (`_str_cache`)
@@ -55,7 +58,7 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - **Lesson:** Passive = analyze existing data. Active = send traffic to the target, even if the traffic is gentle.
 
 ### 6. Project inside OneDrive
-- **Symptom:** None yet, but it's a known risk. OneDrive syncing can slow down or corrupt a venv and `.git` folder.
+- **Symptom:** None at first, but it's a known risk. OneDrive syncing can slow down or corrupt a venv and `.git` folder.
 - **Fix:** Moved the project to `C:\dev\tls-deepfake-audit`.
 - **Lesson:** Keep dev projects out of cloud-synced folders. This move directly caused entry 9.
 
@@ -89,21 +92,81 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - **Fix:** Retyped the commands.
 - **Lesson:** Read the error message and the path first. Many "errors" are typos.
 
-### 12. Wording the instructor email
+### 12. Wording the email sent to Nate
 - **Challenge:** My draft said the rate limits were "to not be flagged."
 - **Issue:** That sounds like evading detection. The real purpose of the limits (5 hosts in parallel, 2 connections per host, timeouts, no retries) is to avoid degrading anyone's service.
 - **Fix:** Reworded the email to explain the honest purpose, disclosed the later use of curl_cffi, and asked about campus network (ResWiFi/eduroam) policy.
 - **Lesson:** Say why a safeguard exists, and don't try to hide scanning activity.
 
-## Phase status
+### 13. Blueprint missed the cipher suite requirement **(AI error)**
+- **Symptom:** Nate's second email said the tooling must fetch **TLS cipher suites**. The original blueprint focused on protocol versions and certificate details, not cipher suite enumeration.
+- **Cause:** The AI-generated plan was written without the instructor's full requirements.
+- **Fix:** Added accepted cipher suites per TLS version to the Phase 3 scope.
+- **Lesson:** Check the assignment's actual requirements against the plan before building, and re-check when the instructor clarifies.
 
-| Phase | Status |
-|-------|--------|
-| 1. Environment setup | Done. SSLyze smoke test on example.com printed certificate info. |
-| 2. Dataset and safety config | Done. 28 tests pass on Python 3.12.2. No network traffic sent. |
-| 3. SSLyze prototype | **Blocked** until the instructor approves scanning in writing. |
+### 14. Phase 1 scan time and network not recorded
+- **Symptom:** While filling in the scan log, I couldn't remember what time my first scan (SSLyze on example.com) ran or which network I was on.
+- **Cause:** I didn't record the log entry when the scan happened.
+- **Fix:** Reconstructed a time window from git commit timestamps (Phase 1 commits at 12:34 PM and 12:57 PM PDT on 2026-10-28). The scan most likely ran before the first commit. I marked the log entry as reconstructed, not exact, and wrote "not recorded" for the network.
+- **Lesson:** Log each scan when it happens, ideally automatically. From Phase 3 on, the scanner script will write the start time, network label, domains, and settings to a run record itself, so the log doesn't depend on memory.
+
+
+## Approval and requirements record
+
+### Approval from email with Nate
+- **Source:** Email replies from Nate (screenshot below).
+
+![Nate's email approval](approval.png)
+
+- **Reply 1, received [10/29/2026]:** Confirmed the project is **active measurement**. Said the plan looked good, there shouldn't be legal concerns, and campus wifi is probably fine. Advised watching for probes being dropped due to rate limiting or other issues.
+- **What the approved plan included:** SSLyze, check-tls, and curl_cffi; Tranco top 500 plus domains from public threat-intel feeds; limits of 5 hosts at once, 2 connections per host, timeouts, no retries; no exploiting, logging in, fuzzing, or downloading from sites; no opening domains in a browser.
+- **Reply 2, received [10/29/2026]:** Project requirements (see below).
+- **Caveat:** Wifi answer was "probably fine," not a guarantee. Nate is not campus IT and I did not email IT. 
+**Decision:** proceed with the project, and stop scanning and tell Nate if anyone contacts me.
+
+### Requirement clarification
+- Find Python libraries that fetch **TLS cipher suites** from web servers and implement that tooling.
+- Consider how long each library would take on **100,000+ hosts** when choosing.
+- Tooling due **11/5**. Finding a larger dataset comes after.
+
+### Conflict: scale vs. safety limits
+- At 5 hosts in parallel, a 100k-host run would take days (my unmeasured estimate, to be replaced with benchmark numbers).
+- **Decision:** Keep all ceilings in `config.py` unchanged. Benchmark on a small batch and extrapolate to 100k.
+- **No ceiling will be raised without Nate's written approval.**
+
+### Ground rules for scanning
+1. No changes to the limits in `config.py` without written approval.
+2. No retries or workarounds for dropped probes. Failures are recorded as data.
+3. Benign domains only until the first test works and Nate confirms threat-intel scanning is fine right now.
+4. Never open scanned domains in a browser or download anything from them.
+5. Keep the scan log below up to date.
+6. If a site operator or IT contacts me: stop and tell Nate.
+7. Keep threat feeds and scan results out of GitHub. Defang malicious domains in anything shared.
+
+## Scan log (every time traffic is sent to a real host)
+
+| Date | Time | Network | Domains | Tool and limits | Notes |
+|------|------|---------|---------|-----------------|-------|
+| 2026-10-28 | [Before 12:57 PM PDT, probably before 12:34 PM (reconstructed from git history; exact time not recorded)] | [home / ResWiFi / eduroam] | example.com | SSLyze `--certinfo`, default settings (not ScanConfig) | Phase 1 smoke test. A real active scan of a documentation domain. |
 
 ## Observations for the report
 - example.com's certificate was valid for 90 days (2026-09-26 to 2026-12-25), typical of automated issuance, so validity length will be a feature to compare across groups.
 - No dedicated "deepfake host" feed was found. The threat-intel list will have to be assembled from phishing feeds or published research, and the selection method must be documented as a study limitation.
 - Many malicious sites sit behind shared hosting (e.g., Cloudflare), so TLS posture may reflect the host more than the site operator.
+
+## Open items
+- [ ] Nate's reply: may parallel hosts be raised for large runs (keeping 2 connections per host)?
+- [ ] Nate's reply: written comparison of libraries, or working tool only?
+- [ ] Source and document threat-intel lists; record the Tranco list ID
+- [ ] Check syllabus for an AI-use disclosure policy
+- [ ] Fill in the `[brackets]` above (name, dates of Nate's emails, screenshot location, Phase 1 scan time and network)
+
+## Phase status (updated 2026-11-01)
+
+| Phase | Status |
+|-------|--------|
+| 1. Environment setup | Done. SSLyze smoke test on example.com printed certificate info. |
+| 2. Dataset and safety config | Done. 28 tests pass on Python 3.12.2. No network traffic sent. |
+| 3. SSLyze prototype (now includes cipher suites) | Approved, starting. No traffic sent yet. |
+| 4. Three libraries | Not started |
+| 5. GitHub | Phase 2 pushed; |
