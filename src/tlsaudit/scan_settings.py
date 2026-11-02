@@ -1,15 +1,23 @@
-"""Turn ScanConfig safety limits into SSLyze settings. Sends no traffic."""
+"""Turn our ScanConfig safety limits into SSLyze settings. Sends no traffic."""
 from sslyze import ScanCommand, ServerNetworkConfiguration
 
 from .config import ScanConfig
 from .dataset import normalize_domain
 
-# Allowlist: only certificate info and cipher suite enumeration.
-ALLOWED_SCAN_COMMANDS = frozenset({
+# Tier 1 (default): certificate info + TLS 1.3 (5 ciphers).
+DEFAULT_SCAN_COMMANDS = frozenset({
     ScanCommand.CERTIFICATE_INFO,
-    ScanCommand.TLS_1_2_CIPHER_SUITES,
     ScanCommand.TLS_1_3_CIPHER_SUITES,
 })
+# Tier 2 (opt-in only): TLS 1.2 adds up to 158 attempts per host.
+TLS12_OPT_IN = frozenset({ScanCommand.TLS_1_2_CIPHER_SUITES})
+
+ALLOWED_SCAN_COMMANDS = DEFAULT_SCAN_COMMANDS | TLS12_OPT_IN
+
+
+def scan_commands(include_tls12: bool = False) -> frozenset:
+    """Which scan commands to run. TLS 1.2 only when explicitly requested."""
+    return ALLOWED_SCAN_COMMANDS if include_tls12 else DEFAULT_SCAN_COMMANDS
 
 
 def scanner_kwargs(cfg: ScanConfig) -> dict:

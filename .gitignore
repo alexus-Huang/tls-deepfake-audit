@@ -16,3 +16,5 @@ data/results/
 # OS/editor
 .DS_Store
 .vscode/
+
+*.jsonl

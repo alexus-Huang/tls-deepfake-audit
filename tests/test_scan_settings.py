@@ -3,7 +3,8 @@ from sslyze import ScanCommand
 
 from tlsaudit.config import ScanConfig
 from tlsaudit.scan_settings import (
-    ALLOWED_SCAN_COMMANDS, build_network_config, scanner_kwargs,
+    ALLOWED_SCAN_COMMANDS, DEFAULT_SCAN_COMMANDS, build_network_config,
+    scan_commands, scanner_kwargs,
 )
 
 def test_scanner_kwargs_use_agreed_limits():
@@ -34,3 +35,18 @@ def test_allowlist_only_certificate_and_cipher_suite_scans():
 @pytest.mark.parametrize("name", ["HEARTBLEED", "OPENSSL_CCS_INJECTION", "ROBOT", "SESSION_RENEGOTIATION"])
 def test_vulnerability_probes_not_allowed(name):
     assert ScanCommand[name] not in ALLOWED_SCAN_COMMANDS
+
+def test_default_scan_is_tls13_and_cert_only():
+    assert scan_commands() == {
+        ScanCommand.CERTIFICATE_INFO,
+        ScanCommand.TLS_1_3_CIPHER_SUITES,
+    }
+
+def test_tls12_requires_explicit_opt_in():
+    assert ScanCommand.TLS_1_2_CIPHER_SUITES not in scan_commands()
+    assert ScanCommand.TLS_1_2_CIPHER_SUITES in scan_commands(include_tls12=True)
+
+@pytest.mark.parametrize("name", ["SSL_2_0_CIPHER_SUITES", "SSL_3_0_CIPHER_SUITES",
+                                  "TLS_1_0_CIPHER_SUITES", "TLS_1_1_CIPHER_SUITES"])
+def test_deprecated_protocol_cipher_scans_never_allowed(name):
+    assert ScanCommand[name] not in scan_commands(include_tls12=True)
