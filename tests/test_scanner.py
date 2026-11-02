@@ -1,9 +1,30 @@
 import pytest
 from datetime import datetime, timezone, timedelta
 from types import SimpleNamespace as NS
-
 from tlsaudit.scanner import record_from_result, validity_days
+import json
+import tlsaudit.scanner as scanner_module
+from sslyze.errors import ServerHostnameCouldNotBeResolved
+from tlsaudit.scanner import empty_record, scan_domains
 
+def test_empty_record_has_no_measurements():
+    rec = empty_record("x.com", "DNS_FAILED", "NOT_STARTED")
+    assert rec["connectivity_status"] == "DNS_FAILED"
+    assert rec["issuer"] is None and rec["validity_days"] is None
+
+
+def test_unresolvable_domain_recorded_not_crash(tmp_path, monkeypatch):
+    def cannot_resolve(hostname, port):
+        raise ServerHostnameCouldNotBeResolved("fake")
+
+    monkeypatch.setattr(scanner_module, "ServerNetworkLocation", cannot_resolve)
+    out = tmp_path / "out.jsonl"
+    scan_domains(["nope.example"], out)
+    rec = json.loads(out.read_text().splitlines()[0])
+    assert rec["domain"] == "nope.example"
+    assert rec["connectivity_status"] == "DNS_FAILED"
+
+    
 def test_validity_days_90():
     assert validity_days("2026-09-26T00:00:00+00:00", "2026-12-25T00:00:00+00:00") == 90
 

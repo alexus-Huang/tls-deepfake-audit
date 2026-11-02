@@ -3,7 +3,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sslyze import (Scanner, ServerNetworkLocation, ServerScanRequest)
+from sslyze import Scanner, ServerNetworkLocation, ServerScanRequest
+from sslyze.errors import ServerHostnameCouldNotBeResolved
 
 from .config import ScanConfig
 from .scan_settings import build_network_config, scan_commands, scanner_kwargs
@@ -22,22 +23,31 @@ def validity_days(not_before_iso, not_after_iso):
     return (end - start).days
 
 
-def record_from_result(result):
-    """Turn one SSLyze result into a flat, JSON-friendly dict.
-
-    Failures are recorded as data (status field), never retried.
-    """
-    rec = {
-        "domain": result.server_location.hostname,
+def empty_record(domain, connectivity_status, scan_status):
+    """A record with every measurement empty. Used for failures."""
+    return {
+        "domain": domain,
         "scanned_at": datetime.now(timezone.utc).isoformat(),
-        "connectivity_status": result.connectivity_status.name,
-        "scan_status": result.scan_status.name,
+        "connectivity_status": connectivity_status,
+        "scan_status": scan_status,
         "tls13_accepted_ciphers": None,
         "issuer": None,
         "not_before": None,
         "not_after": None,
         "validity_days": None,
     }
+
+
+def record_from_result(result):
+    """Turn one SSLyze result into a flat, JSON-friendly dict.
+
+    Failures are recorded as data (status field), never retried.
+    """
+    rec = empty_record(
+        result.server_location.hostname,
+        result.connectivity_status.name,
+        result.scan_status.name,
+    )
     if result.scan_result is None:       # host never answered
         return rec
 
@@ -60,20 +70,30 @@ def record_from_result(result):
 def scan_domains(domains, out_path, cfg=None, include_tls12=False):
     """Scan plain hostnames (port 443 only) and append one JSON line each."""
     cfg = cfg or ScanConfig()
-    requests = [
-        ServerScanRequest(
-            server_location=ServerNetworkLocation(hostname=d, port=443),
-            network_configuration=build_network_config(d, cfg),
+    requests, failures = [], []
+    for d in domains:
+        network_config = build_network_config(d, cfg)
+        try:
+            location = ServerNetworkLocation(hostname=d, port=443)
+        except ServerHostnameCouldNotBeResolved:
+            failures.append(empty_record(d, "DNS_FAILED", "NOT_STARTED"))
+            continue
+        requests.append(ServerScanRequest(
+            server_location=location,
+            network_configuration=network_config,
             scan_commands=set(scan_commands(include_tls12)),
-        )
-        for d in domains          
-    ]
-    scanner = Scanner(**scanner_kwargs(cfg))
-    scanner.queue_scans(requests)
+        ))
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("a", encoding="utf-8") as f:
+        for rec in failures:
+            f.write(json.dumps(rec) + "\n")
+        f.flush()
+        if not requests:
+            return
+        scanner = Scanner(**scanner_kwargs(cfg))
+        scanner.queue_scans(requests)
         for result in scanner.get_results():
             f.write(json.dumps(record_from_result(result)) + "\n")
             f.flush()             
