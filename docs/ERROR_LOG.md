@@ -166,6 +166,7 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 |------|------|---------|---------|-----------------|-------|
 | 2026-10-28 | [Before 12:57 PM PDT, probably before 12:34 PM (reconstructed from git history; exact time not recorded)] | [home / ResWiFi / eduroam] | example.com | SSLyze `--certinfo`, default settings (not ScanConfig) | Phase 1 smoke test. A real active scan of a documentation domain. |
 | 2026-11-01 | 4:53 PM PST | [your network] | example.com | SSLyze via ScanConfig: 5 hosts, 2 conn/host, 5 s timeout, 1 attempt. Cert info + TLS 1.3 only | First Tier 1 scan. Succeeded; 3 of 5 TLS 1.3 ciphers accepted, 90-day cert. |
+| 2026-11-0X | 8:29 PM | ResWiFi| example.com + top 9 Tranco (same 10 as earlier batch) | SSLyze (5 hosts, 2 conn/host, 5 s, 1 attempt, cert + TLS 1.3), ssl (1 handshake), curl_cffi (1 HEAD, no redirects/retries), check-tls (-m simple, no crt.sh/CRL/OCSP/HSTS, chunks of 5) | Library comparison run. |
 ## Observations for the report
 - example.com's certificate was valid for 90 days (2026-09-26 to 2026-12-25), typical of automated issuance, so validity length will be a feature to compare across groups.
 - No dedicated "deepfake host" feed was found. The threat-intel list will have to be assembled from phishing feeds or published research, and the selection method must be documented as a study limitation.

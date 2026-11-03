@@ -49,7 +49,7 @@ def classify_error(exc):
     return "OTHER_ERROR"
 
 
-# ---------- Library: Python ssl (1 TCP connection + 1 handshake per host) ----------
+# ---------- Library: Python ssl ----------
 def probe_ssl(domain, cfg):
     _require_hostname(domain)
     rec = {"library": "ssl", "domain": domain, "scanned_at": _now(),
@@ -73,7 +73,7 @@ def probe_ssl_all(domains, cfg):
         return list(pool.map(lambda d: probe_ssl(d, cfg), domains))
 
 
-# ---------- Library: curl_cffi (1 HEAD request per host, no retries) ----------
+# ---------- Library: curl_cffi ----------
 def probe_curl(domain, cfg):
     _require_hostname(domain)
     rec = {"library": "curl_cffi", "domain": domain, "scanned_at": _now(),
@@ -95,7 +95,7 @@ def probe_curl_all(domains, cfg):
         return list(pool.map(lambda d: probe_curl(d, cfg), domains))
 
 
-# ---------- Library: check-tls (separate venv, run as a command) ----------
+# ---------- Library: check-tls ----------
 def chunks(items, size):
     for i in range(0, len(items), size):
         yield items[i:i + size]
@@ -126,12 +126,12 @@ def probe_check_tls(domains, cfg, exe=CHECK_TLS_EXE):
                 "library": "check_tls", "domain": d, "scanned_at": _now(),
                 "status": item.get("status") if item else (error or "NO_OUTPUT"),
                 "caa_check": item.get("caa_check") if item else None,
-                "raw": item,   # keep everything so we can inspect the real fields
+                "raw": item,   
             })
     return records
 
 
-# ---------- Orchestration and timing ----------
+
 def extrapolate_hours(seconds, n_hosts, target=100_000):
     """Best-case hours for `target` hosts, from a small measured run."""
     if n_hosts <= 0:
@@ -149,7 +149,7 @@ def run_comparison(domains, out_dir, cfg=None):
     cfg = cfg or ScanConfig()
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    for old in out_dir.glob("compare_*.jsonl"):   # scan_domains appends; start clean
+    for old in out_dir.glob("compare_*.jsonl"):
         old.unlink()
 
     timing = {}
