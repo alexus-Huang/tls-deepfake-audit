@@ -18,3 +18,4 @@ data/results/
 .vscode/
 
 *.jsonl
+.venv-checktls/

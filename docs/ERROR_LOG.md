@@ -134,6 +134,13 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - **Caveat:** Wifi answer was "probably fine," not a guarantee. Nate is not campus IT and I did not email IT. 
 **Decision:** proceed with the project, and stop scanning and tell Nate if anyone contacts me.
 
+### Nate's reply regarding TLS Version, scale, written comparison(received [11/1/2026])
+- **TLS versions:** "I think sticking to the TLS 1.3 should be sufficient." **Decision:** TLS 1.2 is not added. Scans stay at certificate info + TLS 1.3 only.
+- **Scale:** The 100k figure is meant to guide building tooling that works at scale in a reasonable time. A large probing run taking a few days is expected, but it shouldn't take weeks. He will share larger datasets next week.
+- **Written comparison of libraries:** Not required, but he said it could make a strong section in the presentation/report. **Decision:** I will include one (speed, output detail, and extrapolated time for 100k hosts), since the report is graded.
+- **Not yet answered:** whether threat-intel domains may be scanned now. I am holding those scans until he provides datasets next week.
+- **Limits:** unchanged (5 hosts, 2 connections per host, 5 s timeout, 1 attempt). No request was made to raise them.
+- **Screenshot:** saved as `docs/approval_reply3.png`.
 ### Requirement clarification
 - Find Python libraries that fetch **TLS cipher suites** from web servers and implement that tooling.
 - Consider how long each library would take on **100,000+ hosts** when choosing.
@@ -165,11 +172,11 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - Many malicious sites sit behind shared hosting (e.g., Cloudflare), so TLS posture may reflect the host more than the site operator.
 
 ## Open items
-- [ ] Nate's reply: may parallel hosts be raised for large runs (keeping 2 connections per host)?
-- [ ] Nate's reply: written comparison of libraries, or working tool only?
-- [ ] Source and document threat-intel lists; record the Tranco list ID
-- [ ] Check syllabus for an AI-use disclosure policy
-- [ ] Fill in the `[brackets]` above (name, dates of Nate's emails, screenshot location, Phase 1 scan time and network)
+- [x] Nate's reply on which TLS versions (TLS 1.3 only)
+- [x] Nate's reply on written comparison (optional, doing it)
+- [ ] Nate's datasets next week; confirm scanning them is approved
+- [ ] Scale-readiness: parallel DNS, resume support, measured dead-host rate
+- [ ] Researched check-tls and curl_cffi: both exist on PyPI, capabilities to be confirmed from docs
 
 ## Phase status (updated 2026-11-01)
 
