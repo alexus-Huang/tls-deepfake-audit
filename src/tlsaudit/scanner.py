@@ -2,26 +2,21 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-
 from sslyze import Scanner, ServerNetworkLocation, ServerScanRequest
 from sslyze.errors import ServerHostnameCouldNotBeResolved
-
 from .config import ScanConfig
 from .scan_settings import build_network_config, scan_commands, scanner_kwargs
-
 
 def _utc(cert, field):
     """Certificate dates: newer cryptography has *_utc attributes."""
     value = getattr(cert, field + "_utc", None) or getattr(cert, field)
     return value.isoformat()
 
-
 def validity_days(not_before_iso, not_after_iso):
     """Certificate lifetime in whole days."""
     start = datetime.fromisoformat(not_before_iso)
     end = datetime.fromisoformat(not_after_iso)
     return (end - start).days
-
 
 def empty_record(domain, connectivity_status, scan_status):
     """A record with every measurement empty. Used for failures."""
@@ -36,7 +31,6 @@ def empty_record(domain, connectivity_status, scan_status):
         "not_after": None,
         "validity_days": None,
     }
-
 
 def record_from_result(result):
     """Turn one SSLyze result into a flat, JSON-friendly dict.

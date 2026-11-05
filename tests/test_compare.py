@@ -2,9 +2,7 @@ import json
 import socket
 import ssl
 from pathlib import Path
-
 import pytest
-
 import tlsaudit.compare as cmp
 from tlsaudit.config import ScanConfig
 
@@ -17,7 +15,6 @@ def test_classify_errors():
     assert cmp.classify_error(ssl.SSLError()) == "TLS_ERROR"
     assert cmp.classify_error(ValueError()) == "OTHER_ERROR"
 
-
 def test_probe_ssl_failure_recorded(monkeypatch):
     def boom(*a, **k):
         raise socket.gaierror()
@@ -25,12 +22,10 @@ def test_probe_ssl_failure_recorded(monkeypatch):
     rec = cmp.probe_ssl("nope.example", ScanConfig())
     assert rec["status"] == "DNS_FAILED" and rec["cipher"] is None
 
-
 @pytest.mark.parametrize("fn", [cmp.probe_ssl, cmp.probe_curl])
 def test_non_hostname_rejected(fn):
     with pytest.raises(ValueError):
         fn("http://example.com", ScanConfig())
-
 
 def test_probe_curl_records_headers(monkeypatch):
     class R:
@@ -60,14 +55,11 @@ def test_check_tls_command_has_all_safety_flags(tmp_path):
         assert flag in cmd
     assert cmd[cmd.index("-m") + 1] == "simple"
 
-
 def test_chunks_never_exceed_parallel_limit():
     assert [len(c) for c in cmp.chunks(list("abcdefghijk"), 5)] == [5, 5, 1]
 
-
 def test_extrapolate_hours():
     assert cmp.extrapolate_hours(1.5, 10) == pytest.approx(1.5 / 10 * 100000 / 3600)
-
 
 def test_probe_check_tls_parses_and_matches_domains(monkeypatch):
     def fake_run(cmd, **kw):

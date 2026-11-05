@@ -1,7 +1,6 @@
 """Comparison harness: same domains, same safety limits, one library at a time.
 
-Libraries compared: SSLyze (via our scanner), Python's ssl module,
-curl_cffi, and check-tls. Sends real traffic: benign, approved domains only.
+Libraries compared: SSLyze, Python's ssl module, curl_cffi, and check-tls. Sends real traffic: benign, approved domains only.
 """
 import json
 import socket
@@ -12,27 +11,22 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
-
 from curl_cffi import requests as curl_requests
-
 from .config import ScanConfig
 from .dataset import load_tranco, normalize_domain
 from .scanner import scan_domains
 
 CHECK_TLS_EXE = Path(".venv-checktls/Scripts/check-tls.exe")
-# Skip everything that contacts third parties (crt.sh, CAs, the site's HTTP port).
+# Skip everything that contacts third parties
 CHECK_TLS_FLAGS = ["-m", "simple", "--no-transparency", "--no-crl-check",
                    "--no-ocsp-check", "--no-hsts-check"]
-
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
 
-
 def _require_hostname(domain):
     if normalize_domain(domain) != domain:
         raise ValueError(f"not a plain lowercase hostname: {domain!r}")
-
 
 def classify_error(exc):
     """Map an exception to a short status label. Failures are data, never retried."""
@@ -48,8 +42,7 @@ def classify_error(exc):
         return "TLS_ERROR"
     return "OTHER_ERROR"
 
-
-# ---------- Library: Python ssl ----------
+#Library: Python ssl
 def probe_ssl(domain, cfg):
     _require_hostname(domain)
     rec = {"library": "ssl", "domain": domain, "scanned_at": _now(),
@@ -73,7 +66,7 @@ def probe_ssl_all(domains, cfg):
         return list(pool.map(lambda d: probe_ssl(d, cfg), domains))
 
 
-# ---------- Library: curl_cffi ----------
+# Library: curl_cffi
 def probe_curl(domain, cfg):
     _require_hostname(domain)
     rec = {"library": "curl_cffi", "domain": domain, "scanned_at": _now(),
@@ -95,7 +88,7 @@ def probe_curl_all(domains, cfg):
         return list(pool.map(lambda d: probe_curl(d, cfg), domains))
 
 
-# ---------- Library: check-tls ----------
+# Library: check-tls
 def chunks(items, size):
     for i in range(0, len(items), size):
         yield items[i:i + size]

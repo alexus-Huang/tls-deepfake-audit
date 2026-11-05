@@ -13,7 +13,7 @@ class ScanConfig:
     parallel_hosts: int = 5
     connections_per_host: int = 2
     connect_timeout: int = 5   # seconds; slow or firewalled hosts are skipped
-    max_retries: int = 0       # no hammering hosts that don't answer
+    max_retries: int = 0
 
     def __post_init__(self):
         if not 1 <= self.parallel_hosts <= MAX_PARALLEL_HOSTS:

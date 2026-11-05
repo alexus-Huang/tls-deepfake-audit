@@ -1,6 +1,5 @@
 import pytest
 from sslyze import ScanCommand
-
 from tlsaudit.config import ScanConfig
 from tlsaudit.scan_settings import (
     ALLOWED_SCAN_COMMANDS, DEFAULT_SCAN_COMMANDS, build_network_config,

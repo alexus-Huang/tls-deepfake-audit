@@ -12,7 +12,6 @@ def test_empty_record_has_no_measurements():
     assert rec["connectivity_status"] == "DNS_FAILED"
     assert rec["issuer"] is None and rec["validity_days"] is None
 
-
 def test_unresolvable_domain_recorded_not_crash(tmp_path, monkeypatch):
     def cannot_resolve(hostname, port):
         raise ServerHostnameCouldNotBeResolved("fake")
@@ -24,7 +23,6 @@ def test_unresolvable_domain_recorded_not_crash(tmp_path, monkeypatch):
     assert rec["domain"] == "nope.example"
     assert rec["connectivity_status"] == "DNS_FAILED"
 
-    
 def test_validity_days_90():
     assert validity_days("2026-09-26T00:00:00+00:00", "2026-12-25T00:00:00+00:00") == 90
 

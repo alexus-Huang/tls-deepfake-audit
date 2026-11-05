@@ -2,13 +2,11 @@
 import csv
 import re
 from pathlib import Path
-
 import pandas as pd
 
 _LABEL = r"(?!-)[a-z0-9-]{1,63}(?<!-)"
 _TLD = r"(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})"
 HOSTNAME_RE = re.compile(rf"^(?=.{{1,253}}$)(?:{_LABEL}\.)+{_TLD}$")
-
 
 def normalize_domain(raw):
     """Return a clean lowercase hostname, or None if unusable.
@@ -23,7 +21,6 @@ def normalize_domain(raw):
         return None
     return s if HOSTNAME_RE.match(s) else None
 
-
 def read_domain_file(path):
     """Read a one-domain-per-line file. Missing file -> empty list."""
     path = Path(path)
@@ -36,7 +33,6 @@ def read_domain_file(path):
             seen.add(d)
             out.append(d)
     return out
-
 
 def load_tranco(path, limit=500):
     """Read the first `limit` valid domains from a Tranco 'rank,domain' CSV."""
@@ -51,8 +47,6 @@ def load_tranco(path, limit=500):
             if len(out) >= limit:
                 break
     return out
-
-
 def build_dataset(tranco_path, threat_files, limit=500):
     """Return a DataFrame with columns: domain, group, source.
 

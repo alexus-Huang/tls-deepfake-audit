@@ -1,6 +1,5 @@
 """Turn our ScanConfig safety limits into SSLyze settings. Sends no traffic."""
 from sslyze import ScanCommand, ServerNetworkConfiguration
-
 from .config import ScanConfig
 from .dataset import normalize_domain
 
@@ -19,14 +18,12 @@ def scan_commands(include_tls12: bool = False) -> frozenset:
     """Which scan commands to run. TLS 1.2 only when explicitly requested."""
     return ALLOWED_SCAN_COMMANDS if include_tls12 else DEFAULT_SCAN_COMMANDS
 
-
 def scanner_kwargs(cfg: ScanConfig) -> dict:
     """Settings for sslyze.Scanner(**kwargs)."""
     return {
         "per_server_concurrent_connections_limit": cfg.connections_per_host,
         "concurrent_server_scans_limit": cfg.parallel_hosts,
     }
-
 
 def build_network_config(hostname: str, cfg: ScanConfig) -> ServerNetworkConfiguration:
     """Per-host network settings. Refuses anything that isn't a plain hostname."""
