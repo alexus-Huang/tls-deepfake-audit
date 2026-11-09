@@ -181,6 +181,11 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 - **Fix:** Added the rows from terminal history. The crashed attempt's time is approximate.
 - **Lesson:** Log each run immediately, or automate it. The automatic run record is still an open item.
 
+### 25. Placeholder folder names used literally in the analyze command
+   - **Symptom:** `analyze` failed with `FileNotFoundError: ...\FOLDER1\results.jsonl`.
+   - **Cause:** I pasted the command with `FOLDER1` to `FOLDER3` placeholders instead of the real run folder names. Nothing was sent.
+   - **Fix:** Ran `dir /b data\results\runs` and used the real names.
+   - **Lesson:** Replace every placeholder before running a command.
 ## Approval and requirements record
 
 ### Approval from email with Nate
@@ -223,7 +228,7 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 5. Keep the scan log below up to date.
 6. If a site operator or IT contacts me: stop and tell Nate.
 7. Keep threat feeds and scan results out of GitHub. Defang malicious domains in anything shared.
-
+8. Exclusion list: `data/raw/exclude.txt` names domains that are never scanned, at my own choice. Excluded: www.gov.uk, all .gov and .mil names, europa.eu, who.int, DNS root/TLD infrastructure names, and 10 unrecognized names I chose not to scan. Exclusions apply before skip/limit counting, and each run's `run.json` records them. Limitation: excluding by appearance adds a small selection bias.
 ## Scan log (every time traffic is sent to a real host)
 
 | Date | Time | Network | Domains | Tool and limits | Notes |
@@ -233,6 +238,11 @@ This log records every error, bug, mistake, obstacle, and challenge I hit, with 
 | 2026-11-01 | about 4:55 PM PST (approximate) | [network] | example.com, google.com, cloudflare.com, amazonaws.com, facebook.com, ezviz7.com | Python/SSLyze DNS lookups only | Batch crashed on ezviz7.com before any TLS connection (entry 19). |
 | 2026-11-01 | 4:56 PM PST | [network] | example.com, google.com, cloudflare.com, amazonaws.com, facebook.com, ezviz7.com, gstatic.com, fbcdn.net, googleapis.com, akamai.net | SSLyze via ScanConfig, Tier 1 | 8 completed, 2 DNS failures (ezviz7.com, akamai.net). 1.5 s total. |
 | 2026-11-02 | about 8:29 PM PST | ResWiFi | Same 10 domains | SSLyze (5 hosts, 2 conn/host, 5 s, 1 attempt, cert + TLS 1.3), ssl (1 handshake), curl_cffi (1 HEAD, no redirects or retries), check-tls (-m simple, no crt.sh/CRL/OCSP/HSTS, chunks of 5) | Library comparison run. 8 of 10 completed in every library. |
+| 2026-11-08 | 6:50 PM PST | ResWiFi | Top 20 Tranco (no exclusions matched) | runner: SSLyze, 5 hosts, 2 conn/host, 5 s, 1 attempt, cert + TLS 1.3 + TLS 1.2 | 14 completed, 5 DNS failed, 1 connection error. 19.8 s. Run folder 20261108-185028_tls12-20dom-5s. |
+| 2026-11-08 | 6:50 PM PST | ResWiFi | Top 20 Tranco | runner: SSLyze, 5 hosts, 2 conn/host, 5 s, 1 attempt, cert + TLS 1.3 + TLS 1.2 | Experiment A: 14 completed, 5 DNS failed, 1 error. 19.8 s. Folder 20261108-185028_tls12-20dom-5s |
+| 2026-11-08 | 7:05 to 7:10 PM PST | ResWiFi | Top 100 Tranco (4 excluded) | runner: SSLyze, 5 hosts, 2 conn/host, 1 attempt, cert + TLS 1.3, timeouts 3/4/5 s | Experiment B: 6 runs, two rounds each. Same outcome every run (74 completed, 23 DNS failed, 3 error). Folders 20261108-190511 to 20261108-190951 |
+| 2026-11-08 | 7:16 to 7:17 PM PST | ResWiFi | Top 20 Tranco | runner: SSLyze, 5 hosts, 2 conn/host, 1 attempt, cert + TLS 1.3 + TLS 1.2, timeouts 4 s and 3 s | Experiment C: same outcome as 5 s (14 completed, 5 DNS failed, 1 error, 0 TLS 1.2 errors). Folders 20261108-191636, 20261108-191708 |
+| 2026-11-08 | 7:18 to 7:27 PM PST | ResWiFi | Top 300 Tranco (17 names excluded), 3 chunks of 100 | runner: SSLyze, 5 hosts, 2 conn/host, 3 s, 1 attempt, cert + TLS 1.3 + TLS 1.2 | Experiment D: 204 completed, 83 DNS failed, 13 error. 468 s total, about 43 h per 100k. 1 TLS 1.2 error in part 1. Folders 20261108-191843, 20261108-192129, 20261108-192454 |
 
 Also sent without logging: DNS-only `nslookup ezviz7.com` queries during troubleshooting.
 

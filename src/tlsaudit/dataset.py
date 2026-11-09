@@ -58,3 +58,69 @@ def build_dataset(tranco_path, threat_files, limit=500):
         rows += [(d, group, Path(p).name) for d in read_domain_file(p)]
     df = pd.DataFrame(rows, columns=["domain", "group", "source"])
     return df.drop_duplicates(subset="domain", keep=False).reset_index(drop=True)
+
+_SPLIT_RE = re.compile(r"[,\t; ]+")
+
+def load_exclusions(path):
+    """Read an exclusion list. Returns (exact_names, suffixes).
+
+    'example.com' blocks that exact name. '.gov.uk' blocks gov.uk and all its subdomains.
+    A missing file means no exclusions.
+    """
+    path = Path(path)
+    if not path.exists():
+        return set(), set()
+    exact, suffixes = set(), set()
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = line.strip().lower().replace("[.]", ".")
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("."):
+            suffixes.add(line)
+        else:
+            name = normalize_domain(line)
+            if name:
+                exact.add(name)
+    return exact, suffixes
+
+
+def is_excluded(domain, exact, suffixes):
+    if domain in exact:
+        return True
+    return any(domain == s[1:] or domain.endswith(s) for s in suffixes)
+
+
+def load_domains(path, limit=None, skip=0, exclude=None, excluded=None):
+    """Read domains from a .txt or .csv file with any column layout.
+
+    Each non-empty, non-comment line is split on commas, tabs, semicolons,
+    and spaces. The first cell that is a plain hostname is used. Header rows,
+    URLs, and IP addresses are rejected and counted.
+    `exclude` is an (exact, suffixes) pair from load_exclusions. Excluded names are
+    dropped before limit/skip are counted, and are appended to the `excluded` list.
+    Returns (domains, rejected_lines).
+    """
+    wanted = None if limit is None else skip + limit
+    seen, out, rejected = set(), [], 0
+    with open(path, encoding="utf-8-sig", errors="ignore") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            domain = None
+            for cell in _SPLIT_RE.split(line):
+                domain = normalize_domain(cell.strip("\"'"))
+                if domain:
+                    break
+            if not domain:
+                rejected += 1
+            elif domain not in seen:
+                seen.add(domain)
+                if exclude and is_excluded(domain, *exclude):
+                    if excluded is not None:
+                        excluded.append(domain)
+                    continue
+                out.append(domain)
+                if wanted is not None and len(out) >= wanted:
+                    break
+    return out[skip:], rejected

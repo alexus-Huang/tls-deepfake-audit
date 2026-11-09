@@ -25,34 +25,48 @@ def empty_record(domain, connectivity_status, scan_status):
         "scanned_at": datetime.now(timezone.utc).isoformat(),
         "connectivity_status": connectivity_status,
         "scan_status": scan_status,
+        "tls13_status": None,
         "tls13_accepted_ciphers": None,
+        "tls12_status": None,
+        "tls12_accepted_ciphers": None,
         "issuer": None,
         "not_before": None,
         "not_after": None,
         "validity_days": None,
     }
 
+
+def _accepted(attempt):
+    """Accepted cipher names from a cipher-suite scan, or None if it has no result."""
+    if attempt is None or attempt.result is None:
+        return None
+    return [c.cipher_suite.name for c in attempt.result.accepted_cipher_suites]
+
+def _status(attempt):
+    return getattr(getattr(attempt, "status", None), "name", None)
+
 def record_from_result(result):
     """Turn one SSLyze result into a flat, JSON-friendly dict.
-
-    Failures are recorded as data (status field), never retried.
     """
     rec = empty_record(
         result.server_location.hostname,
         result.connectivity_status.name,
         result.scan_status.name,
     )
-    if result.scan_result is None:       # host never answered
+    if result.scan_result is None:       # host never answered properly
         return rec
 
     sr = result.scan_result
-    tls13 = sr.tls_1_3_cipher_suites
-    if tls13.result is not None:
-        rec["tls13_accepted_ciphers"] = [
-            c.cipher_suite.name for c in tls13.result.accepted_cipher_suites
-        ]
-    cert_attempt = sr.certificate_info
-    if cert_attempt.result is not None and cert_attempt.result.certificate_deployments:
+    t13 = getattr(sr, "tls_1_3_cipher_suites", None)
+    t12 = getattr(sr, "tls_1_2_cipher_suites", None)
+    rec["tls13_accepted_ciphers"] = _accepted(t13)
+    rec["tls13_status"] = _status(t13)
+    rec["tls12_accepted_ciphers"] = _accepted(t12)
+    rec["tls12_status"] = _status(t12)
+
+    cert_attempt = getattr(sr, "certificate_info", None)
+    if (cert_attempt is not None and cert_attempt.result is not None
+            and cert_attempt.result.certificate_deployments):
         leaf = cert_attempt.result.certificate_deployments[0].received_certificate_chain[0]
         rec["issuer"] = leaf.issuer.rfc4514_string()
         rec["not_before"] = _utc(leaf, "not_valid_before")

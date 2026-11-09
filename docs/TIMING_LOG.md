@@ -1,0 +1,1 @@
+Notes: Experiment B (TLS 1.3, top 100): outcomes were identical at 3, 4, and 5 s, so the lowest, 3 s, was chosen. Run time varied (5 s about 60 s, 4 s about 11 s, 3 s 35 s and 12 s) and the cause is not yet known. 23 of 100 names failed DNS on ResWiFi. Estimates for 100k hosts ranged from 3.0 to 17.4 hours, so they are rough.

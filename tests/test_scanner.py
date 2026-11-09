@@ -56,3 +56,28 @@ def test_successful_scan_fields():
     assert rec["tls13_accepted_ciphers"] == ["TLS_AES_128_GCM_SHA256"]
     assert rec["issuer"] == "CN=Test CA"
     assert rec["validity_days"] == 90
+
+def test_tls12_fields_recorded():
+    names12 = ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"]
+    sr = NS(
+        tls_1_3_cipher_suites=NS(status=NS(name="COMPLETED"), result=NS(accepted_cipher_suites=[
+            NS(cipher_suite=NS(name="TLS_AES_128_GCM_SHA256"))])),
+        tls_1_2_cipher_suites=NS(status=NS(name="COMPLETED"), result=NS(accepted_cipher_suites=[
+            NS(cipher_suite=NS(name=n)) for n in names12])),
+        certificate_info=NS(result=None),
+    )
+    rec = record_from_result(_fake(sr))
+    assert rec["tls12_accepted_ciphers"] == names12
+    assert rec["tls12_status"] == "COMPLETED" and rec["tls13_status"] == "COMPLETED"
+
+
+def test_unscheduled_tls12_is_none():
+    sr = NS(
+        tls_1_3_cipher_suites=NS(status=NS(name="COMPLETED"), result=NS(accepted_cipher_suites=[])),
+        tls_1_2_cipher_suites=NS(status=NS(name="NOT_SCHEDULED"), result=None),
+        certificate_info=NS(result=None),
+    )
+    rec = record_from_result(_fake(sr))
+    assert rec["tls12_accepted_ciphers"] is None
+    assert rec["tls12_status"] == "NOT_SCHEDULED"
+    assert rec["tls13_accepted_ciphers"] == []
