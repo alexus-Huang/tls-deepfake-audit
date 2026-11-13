@@ -63,9 +63,6 @@ _SPLIT_RE = re.compile(r"[,\t; ]+")
 
 def load_exclusions(path):
     """Read an exclusion list. Returns (exact_names, suffixes).
-
-    'example.com' blocks that exact name. '.gov.uk' blocks gov.uk and all its subdomains.
-    A missing file means no exclusions.
     """
     path = Path(path)
     if not path.exists():
@@ -83,12 +80,10 @@ def load_exclusions(path):
                 exact.add(name)
     return exact, suffixes
 
-
 def is_excluded(domain, exact, suffixes):
     if domain in exact:
         return True
     return any(domain == s[1:] or domain.endswith(s) for s in suffixes)
-
 
 def load_domains(path, limit=None, skip=0, exclude=None, excluded=None):
     """Read domains from a .txt or .csv file with any column layout.
